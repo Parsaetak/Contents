@@ -269,8 +269,8 @@ A framework can define **how a capability should be used or evaluated** without 
 | [`AI INSTRUCTIONS UPDATE 12 AUGUST 2026.txt`](./AI%20INSTRUCTIONS%20UPDATE%2012%20AUGUST%202026.txt)               | Master operating constitution and execution architecture |
 | [`REP_Updated_August_13_2026.txt`](./REP_Updated_August_13_2026.txt)                                               | Current AI-specific reasoning and execution framework    |
 | [`USEF_Updated_August_13_2026.txt`](./USEF_Updated_August_13_2026.txt)                                             | Current universal system-enhancement framework           |
-| [`Reasoning Enhancement Protocol - (REP).txt`](./Reasoning%20Enhancement%20Protocol%20-%20%28REP%29.txt)           | Earlier REP document                                     |
-| [`Unified System Enhancement Framework (USEF).txt`](./Unified%20System%20Enhancement%20Framework%20%28USEF%29.txt) | Earlier USEF document                                    |
+| [`Reasoning Enhancement Protocol - (REP).txt`]([./Reasoning%20Enhancement%20Protocol%20-%20%28REP%29.txt](https://github.com/Parsaetak/Contents/blob/Archive-old-files/Reasoning%20Enhancement%20Protocol%20-%20(REP).txt))           | Earlier REP document                                     |
+| [`Unified System Enhancement Framework (USEF).txt`](https://github.com/Parsaetak/Contents/blob/Archive-old-files/Unified%20System%20Enhancement%20Framework%20(USEF).txt) | Earlier USEF document                                    |
 
 ### Current authoritative documents
 

@@ -3,7 +3,6 @@
 > A unified, portable framework architecture for building more reliable, capable, verifiable, and systematically improvable AI systems.
 
 **Architect:** Parsa Tak
-**Research Horizon:** 2025–13 August 2026
 **License:** Open / CC BY 4.0 where specified by the individual framework documents
 **Primary Reference:** [Parsa Tak](https://linktr.ee/Parsaetak)
 

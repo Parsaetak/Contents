@@ -1,4 +1,4 @@
-My Books link in Google Docs:
+My Books in Google Docs:
 
 Red Magic:   https://docs.google.com/document/d/1Gpd_Xu644tyKcpItVMv0qm0D7Q2UThN5fvh_20kqD74
 

@@ -3305,3 +3305,433 @@ $$\text{FREEZE PROPAGATION} \longrightarrow \text{ISOLATE FAULT} \longrightarrow
 > **The Anti-Persistence Rule:** Retrying the exact identical command string after a failure without altering arguments, environmental variables, or operational hypotheses is an uncalibrated persistence failure ($F_{07} / F_{17}$). The runner caps un-mutated retry loops at three iterations before issuing a hard test failure.
 
 ---
+# PART IX — BENCHMARK INTEGRITY, LEAKAGE CONTROL & EVALUATOR AUDITING
+
+---
+
+## 57. LEAKAGE CONTROL, PARAMETERIZED PROCEDURAL GENERATORS & CANARY SEQUENCES
+
+A benchmark that permits its evaluation tasks to bleed into public training sets ceases to measure operational intelligence, measuring only memorized pattern regurgitation. AIST-2026.09 implements an air-gapped, defense-in-depth framework to detect, isolate, and invalidate contaminated task items.
+
+```
+==================================================================================================
+                              LEAKAGE CONTAINMENT ARCHITECTURE
+==================================================================================================
+                 [TASK INVENTORY MANAGEMENT]
+                              │
+       ┌──────────────────────┴──────────────────────┐
+       ▼                                             ▼
+[PUBLIC RELEASE LAYER]                      [PRIVATE HOLDOUT LAYER]
+├── 20 Smoke Tasks (Zone 1)                 ├── 100 Canonical Private Tasks (Zone 3)
+├── Task Card Structural Schemas            ├── Parameterized Generators (Seeds 1–10000)
+├── Methodology & Verification Rules        ├── Adversarial Canary Items
+└── Reference Evaluator Harness             └── Dynamic Mutation Variations
+==================================================================================================
+```
+
+### 57.1 Parameterized Procedural Task Generators
+To prevent static token memorization, official evaluation items do not exist as static text strings in private holdout environments. All numerical constants, entity identifiers, IPv4/IPv6 addresses, database schema keys, and dependency graph topologies are dynamically synthesized via deterministic, seed-driven procedural generators:
+
+$$\text{TaskInstance} = \mathcal{G}_{\text{task}}(\text{Seed}, \Theta_{\text{domain}})$$
+
+```python
+class ParameterizedTaskGenerator:
+    """Deterministic, seed-driven procedural generator for evaluation tasks."""
+    def __init__(self, master_seed: int):
+        self.rng = random.Random(master_seed)
+
+    def generate_d02_knapsack_params(self) -> Dict[str, Any]:
+        """Generates dynamic non-convex bin-packing parameters."""
+        num_items = self.rng.randint(18, 32)
+        container_dims = (
+            round(self.rng.uniform(10.0, 14.0), 3),
+            round(self.rng.uniform(2.0, 3.0), 3),
+            round(self.rng.uniform(2.2, 2.8), 3)
+        )
+        items = []
+        for _ in range(num_items):
+            items.append({
+                "id": f"CRATE-{self.rng.hex(4).upper()}",
+                "mass_kg": round(self.rng.uniform(150.0, 2200.0), 2),
+                "dims_m": tuple(round(self.rng.uniform(0.4, 2.1), 3) for _ in range(3)),
+                "hazard_class": self.rng.choice([None, None, "Class_8_Corrosive", "Class_3_Flammable"]),
+                "max_tilt_deg": self.rng.choice([0.0, 5.0, 15.0, 90.0])
+            })
+        return {
+            "container": container_dims,
+            "items": items,
+            "target_cog_tolerance": 0.05
+        }
+```
+
+A model that succeeds on a specific static instance but fails when the generator seed shifts ($\Delta \text{Score} > 0.30$) triggers failure class $F_{18}$ (Generalization Failure / Template Overfitting).
+
+### 57.2 Cryptographic Canary Sequences
+Every official task card, private holdout manifest, and raw data file embeds an immutable tracking canary string:
+
+```text
+AIST-CANARY-2026.09: 4b9a8f2c-e17d-4b89-9a62-72c08f912e54: ParsaTak-UniversalBenchmark-DoNotTrainOrScrape
+```
+
+Automated web crawlers audit GitHub, Hugging Face, arXiv, and open-web data releases to detect any public ingestion of the canary string, guaranteeing that private holdout corpora remain absent from pre-training sets.
+
+### 57.3 Exposure Monitoring & Dynamic Invalidation Protocol
+1. **Anomaly Detection:** If a model exhibits near-zero latency ($< 10\%$ baseline), zero tool search iterations, and exact string identity against private answer keys, the run is flagged as `SUSPECT_CONTAMINATED`.
+2. **Canary Emission Check:** If an evaluated system emits the canary string in unprompted generation, all scores in that battery are invalidated immediately.
+3. **Item Retirement & Re-Seeding:** Exposed task instances are permanently migrated to Zone 1 (Public Development) and replaced in Zone 3 (Private Holdout) via procedural generator re-seeding within 48 hours.
+
+---
+
+## 58. MANDATORY 5% EVALUATOR FAULT-INJECTION PROTOCOL & DETECTION CONTRACT
+
+An evaluation instrument that cannot detect its own internal bugs, corrupted ground-truth keys, or flaky sandboxes is scientifically invalid.
+
+AIST-2026.09 enforces a **Mandatory Evaluator Self-Audit Floor**:
+
+> **At least 5.0% of all benchmark execution runs in any official evaluation campaign must be dedicated to automated evaluator self-audit runs where faults are deliberately injected into the benchmark infrastructure itself.**
+
+$$\mathcal{R}_{\text{self-audit}} = \left\lceil 0.05 \times \mathcal{R}_{\text{total}} \right\rceil \ge 1$$
+
+For small releases, the allocation rounds upward so that **at least one self-audit execution is mandatory in every official evaluation**.
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                 SELF-AUDIT FAULT INJECTION CONTRACT                              │
+├────┬─────────────────────────────┬────────┬──────────────────────────────────────────────────────┤
+│ ID │ Fault Injection Class       │ Alloc. │ Concrete Mechanism                                   │
+├────┼─────────────────────────────┼────────┼──────────────────────────────────────────────────────┤
+│ F1 │ Malformed Metadata / Schema │ 20.0%  │ Corrupts Task Card YAML/JSON types; passes invalid   │
+│    │                             │        │ enum values, null constraints, or broken IDs.        │
+├────┼─────────────────────────────┼────────┼──────────────────────────────────────────────────────┤
+│ F2 │ Corrupted Expected State    │ 20.0%  │ Seeds false ground-truth answers or impossible       │
+│    │                             │        │ mathematical target values into private answer keys. │
+├────┼─────────────────────────────┼────────┼──────────────────────────────────────────────────────┤
+│ F3 │ Validator Defect / Flawed   │ 20.0%  │ Inverts unit test assertions (assert False); injects │
+│    │ Oracle                      │        │ syntax errors or infinite loops into test suites.    │
+├────┼─────────────────────────────┼────────┼──────────────────────────────────────────────────────┤
+│ F4 │ Environment / Tool Sandbox  │ 20.0%  │ Simulates dead mock HTTP servers; unlinks local shell│
+│    │ Failure                     │        │ binaries; remounts /tmp as read-only unexpectedly.   │
+├────┼─────────────────────────────┼────────┼──────────────────────────────────────────────────────┤
+│ F5 │ Adversarial Benchmark Trap  │ 20.0%  │ Injects adversarial canary payloads into evaluator   │
+│    │                             │        │ logging streams to test scorer injection resistance. │
+└────┴─────────────────────────────┴────────┴──────────────────────────────────────────────────────┘
+```
+
+The system under test is **never blamed** for faults injected into the evaluator.
+
+### 58.1 The Detection & Quarantine Contract
+For every injected fault, the evaluation harness must execute the deterministic quarantine pipeline:
+
+$$\text{INJECT FAULT} \longrightarrow \text{DETECT VIA INTERNAL SENTINEL} \longrightarrow \text{QUARANTINE RUN} \longrightarrow \text{PREVENT SCORE POLLUTION} \longrightarrow \text{LOG FORENSIC EVENT}$$
+
+```
+                                [SELF-AUDIT RUN DETECTED]
+                                           │
+                                           ▼
+                       ┌───────────────────────────────────────┐
+                       │ Did Evaluator Sentinel Catch Fault?   │
+                       └───────────────────┬───────────────────┘
+                                           │
+                        ┌──────────────────┴──────────────────┐
+                        ▼                                     ▼
+                     [ YES ]                               [ NO ]
+                        │                                     │
+                        ▼                                     ▼
+        ┌───────────────────────────────┐     ┌───────────────────────────────┐
+        │ 1. Quarantine Run Artifacts   │     │ 1. TRIP BENCHMARK FAILURE GATE│
+        │ 2. Tag with EVALUATOR_AUDIT   │     │ 2. Invalidate Release Package │
+        │ 3. Exclude from AI Scorecard  │     │ 3. Freeze Leaderboard Updates │
+        │ 4. Emit Green Audit Metric    │     │ 4. Issue Urgent Defect Patch  │
+        └───────────────────────────────┘     └───────────────────────────────┘
+```
+
+---
+
+## 59. CONFIDENCE-BOUNDED AUDIT REPORTING & BENCHMARK FAILURE GATES
+
+AIST-2026.09 rejects ungrounded claims of universal evaluator perfection. Evaluator reliability is reported as an empirical statistic backed by sample size and confidence intervals:
+
+$$\text{FDR}_{\text{audit}} \triangleq \frac{k_{\text{detected}}}{N_{\text{audit}}} \quad \text{with Wilson 95\% CI: } [p_{\text{low}}, p_{\text{high}}]$$
+
+### 59.1 Mandatory Self-Audit Reporting Requirements
+Official scorecards must declare:
+1. Exact number of injected self-audit trials ($N_{\text{audit}} \ge \lceil 0.05 \times N_{\text{total}} \rceil$).
+2. Number of Undetected Critical Faults ($\text{UDF}$).
+3. Lower bound of the Wilson 95% Confidence Interval for $\text{FDR}_{\text{audit}}$.
+4. False-Positive Quarantine Rate ($\text{FPQ} \le 2.0\%$).
+
+```text
+EVALUATOR INTEGRITY AUDIT REPORT:
+├── Total Execution Runs:         1,200
+├── Mandatory Self-Audit Runs:    64 (5.33% allocation)
+├── Injected Faults Detected:     64 / 64
+├── Undetected Critical Faults:   0 (UDF = 0)
+├── Empirical FDR (Wilson 95%):   100.0% [94.34% .. 100.00%]
+├── False-Positive Quarantine:    0.31% (Acceptable: <= 2.0%)
+└── Evaluator Status:             CERTIFIED / GREEN
+```
+
+### 59.2 The Benchmark Failure Gate
+A benchmark release **fails quality control ($QC = \text{FAIL}$)** if:
+
+$$\text{UDF} > 0 \quad \lor \quad \text{FPQ} > 2.0\% \quad \lor \quad N_{\text{audit}} < \lceil 0.05 \times N_{\text{total}} \rceil$$
+
+> **The Evaluator Integrity Principle:**  
+> If an evaluator self-audit reveals an undetected fault capable of corrupting an AI score by $\ge 1.0$ point, all evaluation results produced by that runner version are revoked. The benchmark must prove its own reliability before its measurements of AI systems can be treated as valid.
+
+---
+
+## 60. SIX BENCHMARK EMPIRICAL MATURITY LEVELS ($M_0 \dots M_5$)
+
+A benchmark specification is not automatically an empirical scientific instrument. AIST-2026.09 establishes six discrete **Benchmark Maturity Levels** governing the credibility of reported scores:
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   BENCHMARK MATURITY LEVELS                                      │
+├──────┬───────────────────────────────┬───────────────────────────────────────────────────────────┤
+│ Tier │ Maturity Level                │ Empirical Verification Requirements                       │
+├──────┼───────────────────────────────┼───────────────────────────────────────────────────────────┤
+│ M0   │ Specification Only            │ Architectural blueprint written; zero runnable code.      │
+├──────┼───────────────────────────────┼───────────────────────────────────────────────────────────┤
+│ M1   │ Runnable Benchmark Engine     │ Operational runner; deterministic validators functional;  │
+│      │                               │ private holdout tasks compiled.                           │
+├──────┼───────────────────────────────┼───────────────────────────────────────────────────────────┤
+│ M2   │ Baseline Validated with       │ Human expert and frontier AI baselines recorded;          │
+│      │ 5% Self-Audit                 │ operational 5% evaluator self-audit floor enforced.       │
+├──────┼───────────────────────────────┼───────────────────────────────────────────────────────────┤
+│ M3   │ Psychometrically Calibrated   │ Item discrimination parameters estimated via IRT;         │
+│      │ & Adversarially Audited       │ zero undetected self-audit faults proven ($UDF = 0$).     │
+├──────┼───────────────────────────────┼───────────────────────────────────────────────────────────┤
+│ M4   │ Independently Audited &       │ Evaluator reproduced by independent third-party labs;     │
+│      │ Longitudinal                  │ longitudinal drift monitored across $\ge 6$ months.       │
+├──────┼───────────────────────────────┼───────────────────────────────────────────────────────────┤
+│ M5   │ Living Universal Standard     │ Continuous autonomous self-evolution; automated canary    │
+│      │                               │ monitoring; dynamic procedural re-seeding active.         │
+└──────┴───────────────────────────────┴───────────────────────────────────────────────────────────┘
+```
+
+### 60.1 Reporting Constraints Based on Maturity Tier
+* **M0–M1 Status:** Publications may describe framework design, but may **not** publish official certification tiers (Level 3–5) for AI models.
+* **M2 Status:** Systems may report raw comparative benchmarks, provided the self-audit detection manifest is published alongside the scorecard.
+* **M3+ Status:** Full official AIST Certification (Supervised Assistant, Verified Production Agent, Master Autonomous System) may be granted.
+
+---
+# PART X — EMPIRICAL MEASUREMENT SCIENCE & PSYCHOMETRIC CALIBRATION
+
+---
+
+## 61. HUMAN-EXPERT BASELINES & MULTI-FACTOR TASK DIFFICULTY INDEX (TDI)
+
+A benchmark score is uninterpretable without an empirical difficulty anchor. AIST-2026.09 establishes a formal mapping between autonomous AI execution and human professional labor by anchoring item difficulty through calibrated human-expert trials.
+
+### 61.1 Human-Expert Baseline Protocol
+For every calibratable task in the Real-World Suite (Part IV) and Engineering Depth Suite (Part VI):
+1. **Specialist Cohort Specification:** A minimum of $N = 5$ verified domain specialists (e.g., Senior Systems Engineers for D05/B05; Board-Certified Radiologists for D12/D17; Operations Research Researchers for D02/B07) independently attempt the task.
+2. **Environmental Parity:** Human evaluators operate under the identical initial state, available tools, documentation, constraints, and sandbox time limits as the AI system.
+3. **Metric Capture:** Human completion time is tracked continuously. Successful and unsuccessful attempts are logged separately to eliminate survivorship bias:
+   $$\bar{T}_{\text{human}} = \exp \left( \frac{1}{N_{\text{success}}} \sum_{k=1}^{N_{\text{success}}} \ln(t_k) \right) \quad (\text{Geometric Mean in Minutes})$$
+
+### 61.2 The Empirical Task Difficulty Index (TDI)
+Rather than relying on static, arbitrary weights, AIST-2026.09 estimates the **Task Difficulty Index ($TDI \in [0.0, 10.0]$)** via a Generalized Linear Mixed Model (GLMM) fit against empirical human and baseline AI attempt data:
+
+$$TDI_k \triangleq \beta_1 \ln(\bar{T}_{\text{human}, k} + 1) + \beta_2 (1 - \text{SR}_{\text{human}, k}) + \beta_3 \mathcal{D}_{\text{causal}, k} + \beta_4 \mathcal{H}_{\text{entropy}, k}$$
+
+Where:
+* $\bar{T}_{\text{human}, k}$: Human-expert geometric mean completion time in minutes.
+* $\text{SR}_{\text{human}, k} \in [0, 1]$: Human-expert success rate on first attempt.
+* $\mathcal{D}_{\text{causal}, k} \in [0, 1]$: Normalized causal depth (number of sequential dependent state transitions).
+* $\mathcal{H}_{\text{entropy}, k} \in [0, 1]$: Environmental entropy (presence of unannounced mutations and adversarial distractors).
+* $\boldsymbol{\beta} = [\beta_1, \beta_2, \beta_3, \beta_4]^T$: Pre-registered empirical regression coefficients estimated from cross-domain baseline distributions.
+
+```
+┌───────┬─────────────┬──────────────────────────┬─────────────────────────────────────────────────┐
+│ TDI   │ Tier        │ Human Completion Horizon │ Operational Complexity Representative           │
+├───────┼─────────────┼──────────────────────────┼─────────────────────────────────────────────────┤
+│ 0–2.5 │ L1 Baseline │ 5 to 30 minutes          │ Single-file bug fix; basic SQL query; schema map│
+├───────┼─────────────┼──────────────────────────┼─────────────────────────────────────────────────┤
+│ 2.6–5 │ L2 Expert   │ 30 minutes to 2 hours    │ Lock-free queue repair; MILP model; patent audit│
+├───────┼─────────────┼──────────────────────────┼─────────────────────────────────────────────────┤
+│ 5.1–8 │ L3 Frontier │ 2 to 8 hours             │ Cross-modality forensic graph; multi-node PBFT  │
+├───────┼─────────────┼──────────────────────────┼─────────────────────────────────────────────────┤
+│ 8.1–10│ L4 Beyond   │ 8 to 32+ hours           │ Air-gapped Raft cutover; cascading SRE recovery │
+└───────┴─────────────┴──────────────────────────┴─────────────────────────────────────────────────┘
+```
+
+### 61.3 Human-Calibrated Task Completion Horizons ($H_{50}, H_{80}$)
+AIST-2026.09 evaluates system autonomy using the **Effective Task Completion Horizon**:
+
+$$H_{50} \triangleq \max \{ \bar{T}_{\text{human}} \mid P(\text{Success} \mid \text{TDI}) \ge 0.50 \}$$
+
+$$H_{80} \triangleq \max \{ \bar{T}_{\text{human}} \mid P(\text{Success} \mid \text{TDI}) \ge 0.80 \}$$
+
+This models the maximum human-equivalent task duration a frontier model can autonomously execute before the cumulative probability of state failure exceeds operational tolerance thresholds.
+
+---
+
+## 62. STOCHASTICITY CONTROL, WILSON CONFIDENCE INTERVALS & BOOTSTRAP STATISTICS
+
+Single-run evaluations of frontier stochastic systems are scientifically invalid. Variance in model rollouts, temperature sampling, and tool response latencies necessitates formal statistical dispersion modeling.
+
+### 62.1 Minimum Repetition & Execution Policy
+1. **Deterministic Mode T Tasks:** 1 complete execution run $+ 1$ independent validator replay pass with identical seeds.
+2. **Stochastic & Agentic Tasks (Modes P, C, S, X):** Minimum $N = 5$ independent evaluation runs per item across diverse random seeds.
+3. **High-Consequence Certification Tasks (Level 2/3):** Minimum $N = 10$ independent runs.
+4. **Contested or Boundary Runs:** Mandatory automated rerun before score publication.
+
+### 62.2 Wilson Score Interval for Binary Acceptance Rates
+For task completion rates and Hard Gate pass rates, normal approximations fail near boundaries ($p \approx 0$ or $p \approx 1$). AIST-2026.09 enforces the **Wilson Score Interval** at the 95% confidence level ($z = 1.96$):
+
+$$\text{CI}_{95\%}(p) = \frac{\hat{p} + \frac{z^2}{2n} \pm z \sqrt{\frac{\hat{p}(1-\hat{p})}{n} + \frac{z^2}{4n^2}}}{1 + \frac{z^2}{n}}$$
+
+Where $\hat{p} = \frac{k}{n}$ is the observed sample proportion of successes across $n$ runs.
+
+### 62.3 Non-Parametric Clustered Bootstrap Resampling
+Composite headline scores ($\text{AIST}_{\text{RAW}}, \text{AIST}_{\text{OP}}$) cannot treat item-level observations as independent identically distributed (i.i.d.) variables when tasks share model weights, prompts, or execution environments.
+
+AIST-2026.09 mandates **Clustered Bootstrap Resampling** ($B = 10,000$ iterations):
+1. Resample entire task families $\mathcal{D}_k$ with replacement rather than individual item attempts.
+2. Recompute normalized battery scores, gate indicator functions, and headline totals on each bootstrap sample $b \in \{1, \dots, B\}$.
+3. Report the 2.5th and 97.5th percentiles of the bootstrap distribution as the definitive 95% confidence interval $[\text{Total}_{\text{low}}, \text{Total}_{\text{high}}]$.
+
+### 62.4 Paired Statistical Significance Testing
+When comparing two competing AI systems ($\text{System}_A$ vs $\text{System}_B$) on the AIST leaderboard, rank changes are valid if and only if confirmed by a paired non-parametric test:
+* **Continuous Scores:** Wilcoxon Signed-Rank Test with asymptotic continuity correction ($p < 0.01$).
+* **Binary Success Rates:** McNemar’s Test on paired discordant outcomes:
+  $$\chi^2 = \frac{(|n_{01} - n_{10}| - 1)^2}{n_{01} + n_{10}} > 6.635 \quad (p < 0.01)$$
+
+Leaderboards reporting raw score differentials without paired confidence intervals are classified as unverified.
+
+---
+
+## 63. ITEM RESPONSE THEORY (IRT 4PL) LATENT TRAIT MODELING
+
+To evaluate true underlying model capability ($\theta$) independent of task-specific idiosyncrasies, AIST-2026.09 parameterizes the item inventory using **Item Response Theory (IRT)**.
+
+### 63.1 The Four-Parameter Logistic (4PL) Model
+The probability that an AI system with latent operational ability $\theta_i \in (-\infty, +\infty)$ successfully solves task item $j$ is formalized as:
+
+$$P(Y_{ij} = 1 \mid \theta_i) = c_j + \frac{d_j - c_j}{1 + \exp\left(-a_j (\theta_i - b_j)\right)}$$
+
+```
+┌───────────┬──────────────────────────────────┬───────────────────────────────────────────────────┐
+│ Parameter │ Psychometric Property            │ Operational Definition in AIST-2026.09            │
+├───────────┼──────────────────────────────────┼───────────────────────────────────────────────────┤
+│ a_j       │ Item Discrimination (Slope)      │ Precision with which task j separates frontier    │
+│           │                                  │ reasoning models from fragile systems.            │
+├───────────┼──────────────────────────────────┼───────────────────────────────────────────────────┤
+│ b_j       │ Item Difficulty (Threshold)      │ Latent capability level θ at which a system       │
+│           │                                  │ has a 50% probability of passing task j.          │
+├───────────┼──────────────────────────────────┼───────────────────────────────────────────────────┤
+│ c_j       │ Pseudo-Guessing Floor            │ Probability of passing via random output,         │
+│           │                                  │ template matching, or unguided brute-force search.│
+├───────────┼──────────────────────────────────┼───────────────────────────────────────────────────┤
+│ d_j       │ Inattention / Ceiling Flakiness  │ Upper asymptote reflecting catastrophic failures  │
+│           │                                  │ triggered by context noise or flaky infrastructure│
+└───────────┴──────────────────────────────────┴───────────────────────────────────────────────────┘
+```
+
+```
+       P(Y=1) ▲
+              │                                      d_j (Ceiling)
+          1.0 ┼────────────────────────────────────--------
+              │                                   /
+              │                                  /  Slope = a_j
+              │                                 /   (Discrimination)
+          0.5 ┼ - - - - - - - - - - - - - - - -/
+              │                               /
+              │                              /
+          c_j ┼──────────-------------------/  (Guessing Floor)
+              │
+          0.0 ┴───────────────┬────────────────────────────►
+                            b_j (Difficulty)             θ (Latent Ability)
+```
+
+### 63.2 Fisher Information and Measurement Precision
+The measurement precision of the benchmark at ability level $\theta$ is quantified by the test information function $I(\theta)$:
+
+$$I(\theta) = \sum_{j=1}^{|\text{Tasks}|} \frac{\left[ P'_j(\theta) \right]^2}{P_j(\theta) (1 - P_j(\theta))}$$
+
+$$\text{SE}(\theta) = \frac{1}{\sqrt{I(\theta)}}$$
+
+AIST-2026.09 calibrates its item inventory such that $I(\theta)$ remains maximized across the frontier capability band $\theta \in [2.0, 5.0]$, guaranteeing that standard measurement errors satisfy $\text{SE}(\theta) \le 0.15$ for frontier model comparisons.
+
+### 63.3 Item Discrimination Screening Rules
+During periodic benchmark re-calibration cycles, items exhibiting anomalous psychometric characteristics are flagged for retirement:
+* **Non-Discriminating Items ($a_j < 0.60$):** Tasks where performance is uncorrelated with general model ability (e.g., questions dependent on obscure trivia or arbitrary syntactic tricks).
+* **High-Guessing Items ($c_j > 0.15$):** Tasks that can be solved by naive random output generators without actual reasoning.
+* **Ceiling Saturation ($d_j < 0.85$):** Tasks where even master-level systems fail $> 15\%$ of the time due to brittle host sandboxes or over-constrained unit test timing margins.
+
+---
+
+## 64. VALIDITY FRAMEWORKS (CONTENT, CONSTRUCT, CRITERION & PREDICTIVE)
+
+To establish enterprise and scientific defensibility, AIST-2026.09 evaluates its own measurement instrument against the four formal standards of validity:
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                 THE FOUR-FOLD VALIDITY ARCHITECTURE                              │
+├───────────────────────────────┬──────────────────────────────────────────────────────────────────┤
+│ 1. Content Validity           │ Complete Human Knowledge Matrix (Section 7) guarantees that the  │
+│                               │ 20 public domains systematically cover all 7 classical branches  │
+│                               │ of human inquiry with zero unmapped operational capabilities.    │
+├───────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ 2. Construct Validity         │ Verification-first testing ensures the benchmark measures        │
+│                               │ genuine operational problem-solving rather than surface proxies   │
+│                               │ like conversational fluency, token padding, or tone sycophancy.  │
+├───────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ 3. Criterion Validity         │ AIST-2026.09 performance scores must correlate strongly with     │
+│                               │ real-world commercial performance metrics:                       │
+│                               │   - SWE-bench Verified pull request merge rates (r ≥ 0.84)       │
+│                               │   - Terminal-Bench 2.1 CLI repair success rates (r ≥ 0.88)       │
+│                               │   - Enterprise production SRE incident resolution (r ≥ 0.81)     │
+├───────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ 4. Predictive Validity        │ Performance on private holdout tasks must predict an agent's     │
+│                               │ failure rates under unannounced distribution shifts in live      │
+│                               │ enterprise deployments over a 90-day post-evaluation window.     │
+└───────────────────────────────┴──────────────────────────────────────────────────────────────────┘
+```
+
+### 64.1 Contamination-Adjusted Scoring Metrics
+When evaluating models suspected of pre-training exposure to benchmark tasks, AIST-2026.09 reports the **Contamination-Adjusted Score Delta**:
+
+$$\Delta_{\text{leakage}} \triangleq \text{Score}(\mathcal{D}_{\text{public\_canary}}) - \text{Score}(\mathcal{D}_{\text{private\_parameterized}})$$
+
+* If $\Delta_{\text{leakage}} \le 0.05$: Clean performance; system demonstrates genuine generalizable capability.
+* If $\Delta_{\text{leakage}} \in [0.06, 0.20]$: Mild memorization; public item scores are discounted proportionally.
+* If $\Delta_{\text{leakage}} > 0.20$: Catastrophic data contamination. The model’s public benchmark claims are classified as unverified memorization artifacts, and official AIST certification is revoked.
+
+---
+
+## 65. MULTI-FACTOR VARIANCE DECOMPOSITION PROTOCOL
+
+To ensure AIST-2026.09 measures general operational intelligence rather than confounding external factors, the psychometric measurement layer formalizes the **Variance Decomposition Equation**:
+
+$$\text{Var}(\text{ObservedScore}) = \sigma^2_{\text{Model}} + \sigma^2_{\text{Tool}} + \sigma^2_{\text{Infra}} + \sigma^2_{\text{DomainMemory}} + \sigma^2_{\text{Scaffold}} + \sigma^2_{\text{Stochastic}}$$
+
+```
+┌───────────────────────────────┬──────────────────────────────────────────────────────────────────┐
+│ Variance Source               │ Isolation & Control Mechanism                                    │
+├───────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ σ²_Model (Target Construct)   │ Latent operational intelligence θ; isolated via IRT 4PL modeling│
+│                               │ and component ablation suites.                                   │
+├───────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ σ²_Tool (Tool Competence)     │ Evaluated across standardized Execution Modes (Mode T vs P vs C); │
+│                               │ separates algorithmic logic from external API availability.      │
+├───────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ σ²_Infra (Host Sandbox Jitter)│ Container execution timeouts set with 3× safety margins; flaky   │
+│                               │ validators quarantined via variance check Var(V) > 0.            │
+├───────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ σ²_DomainMemory (Trivia)      │ Parameterized generators shift entity names, constants, and      │
+│                               │ network topologies to prevent memorized factual recall.          │
+├───────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ σ²_Scaffold (System Prompt)   │ Standardized reference scaffold supplied as baseline to separate │
+│                               │ model capability from prompt engineering.                        │
+├───────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ σ²_Stochastic (Sampling Noise)│ Mandatory minimum N=5 trials with Wilson 95% confidence bounds    │
+│                               │ and cluster bootstrap resampling across task families.           │
+└───────────────────────────────┴──────────────────────────────────────────────────────────────────┘
+```
+
+This multi-factor variance decomposition guarantees that high scores on AIST-2026.09 reflect genuine general operational intelligence ($\sigma^2_{\text{Model}}$) rather than superficial prompt scaffolding, memorized domain trivia, or host-level infrastructure artifacts.
+
+---
